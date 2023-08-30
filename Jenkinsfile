@@ -1,3 +1,8 @@
+def COLOR_MAP = [
+    'SUCCESS': 'good', 
+    'FAILURE': 'danger',
+    'UNSTABLE': 'danger'
+]
 pipeline {
   agent {
     label 'Maven-Build-Env' // Use the Maven slave node for this pipeline
@@ -32,8 +37,8 @@ pipeline {
         steps {
             sh  """mvn sonar:sonar \
                    -Dsonar.projectKey=Maven-JavaWebApp \
-                   -Dsonar.host.url=http://172.31.5.173:9000 \
-                   -Dsonar.login=ed7f1ae74cf8b693cadbd47043d4b9ed5ef50913"""
+                   -Dsonar.host.url=http://172.31.52.45:9000 \
+                   -Dsonar.login=bc8bfd46f8b08bc7e0e4f407d44cbeb66d5c35cf"""
         }
     }
     stage("Upload Artifact To Nexus"){
@@ -45,6 +50,14 @@ pipeline {
               echo 'Successfully Uploaded Artifact to Nexus Artifactory'
         }
       }
+    }
+  }
+  post {
+    always {
+        echo 'Slack Notifications.'
+        slackSend channel: '#moustafa-jenkins-master-client-alerts', //update and provide your channel name
+        color: COLOR_MAP[currentBuild.currentResult],
+        message: "*${currentBuild.currentResult}:* Job Name '${env.JOB_NAME}' build ${env.BUILD_NUMBER} \n Build Timestamp: ${env.BUILD_TIMESTAMP} \n Project Workspace: ${env.WORKSPACE} \n More info at: ${env.BUILD_URL}"
     }
   }
 }
